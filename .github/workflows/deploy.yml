@@ -1,9 +1,21 @@
+
 name: Deploy Hexo
 
 on:
   push:
     branches:
-      - main  
+      - main 
+
+# 给予该脚本发布 Pages 的最高权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 确保同一时间只有一个部署任务在运行
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -13,9 +25,10 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v4  
+      uses: actions/setup-node@v4
       with:
         node-version: '20'
+        cache: 'npm'
 
     - name: Install Dependencies
       run: |
@@ -26,15 +39,14 @@ jobs:
       run: |
         hexo clean
         hexo generate
+        # 在编译出的网页目录里放入阻断 Jekyll 的控制文件
+        touch public/.nojekyll
+
+    - name: Upload Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './public' 
 
     - name: Deploy to GitHub Pages
-      env:
-        GH_TOKEN: ${{ secrets.HEXO_DEPLOY_KEY }}
-      run: |
-        git config --global user.email "wu.zhongpeng@foxmail.com"  
-        git config --global user.name "wu.zhongpeng"          
-        cd public
-        git init
-        git add .
-        git commit -m "Automated deployment"
-        git push --force "https://${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" master:gh-pages
+      id: deployment
+      uses: actions/deploy-pages@v4 
