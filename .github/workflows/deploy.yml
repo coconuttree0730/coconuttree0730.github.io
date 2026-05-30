@@ -1,0 +1,40 @@
+name: Deploy Hexo
+
+on:
+  push:
+    branches:
+      - main  
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Source
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4  
+      with:
+        node-version: '20'
+
+    - name: Install Dependencies
+      run: |
+        npm install
+        npm install -g hexo-cli
+
+    - name: Build Static Files
+      run: |
+        hexo clean
+        hexo generate
+
+    - name: Deploy to GitHub Pages
+      env:
+        GH_TOKEN: ${{ secrets.HEXO_DEPLOY_KEY }}
+      run: |
+        git config --global user.email "wu.zhongpeng@foxmail.com"  
+        git config --global user.name "wu.zhongpeng"          
+        cd public
+        git init
+        git add .
+        git commit -m "Automated deployment"
+        git push --force "https://${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" master:gh-pages
