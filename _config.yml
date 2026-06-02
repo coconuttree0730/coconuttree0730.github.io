@@ -3,17 +3,18 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Hexo
-subtitle: ''
-description: ''
+title: "wzp's blog"
+subtitle: "coconuttree's Coding Notes"
+description: "coconuttree's Coding Notes - 技术笔记与生活记录"
 keywords:
-author: John Doe
-language: en
-timezone: ''
+author: wzp
+avatar: https://avatars.githubusercontent.com/u/125727840?%E2%80%A600&u=9798aa414182d415e61712130badb3e2ac30fe21&v=4
+language: zh-CN
+timezone: 'Asia/Shanghai'
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
-url: http://example.com
+url: https://coconuttree0730.github.io
 permalink: :year/:month/:day/:title/
 permalink_defaults:
 pretty_urls:

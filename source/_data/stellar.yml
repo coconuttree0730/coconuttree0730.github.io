@@ -25,45 +25,41 @@ open_graph:
   twitter_id: # for open_graph meta
 
 structured_data:
-  links: [] # your social links.
+  links:
+    - https://github.com/coconuttree0730
 
 
 ######## Sidebar ########
 # 左上角显示的 logo 区域，包含图标、大标题、副标题
 logo:
-  avatar: '[{config.avatar}](/about/)' # you can set avatar link in _config.yml or '[https://xxx.png](/about/)'
-  title: '[{config.title}](/)' # you can set html tag like: '[<img no-lazy height="32px" src="xxx"/>](/)'
+  avatar: '[{config.avatar}](/about/)' # TODO: 在 _config.yml 中设置 avatar，或直接填入头像URL
+  title: '[{config.title}](/)' # 读取 _config.yml 的 title
   subtitle: '{config.subtitle}' # '文字1 | 文字2' (鼠标放上去会切换到文字2)
 
 # 侧边栏主功能导航菜单
 menubar:
-  columns: 4 # 一行多少个
-  items: # 可按照自己需求增加，符合以下格式即可
-    # id: 页面中高亮的 menu_id 
-    # theme: 高亮时的颜色，仅 svg 中 fill="currentColor" 时有效
-    # icon: 支持 svg/img 标签，可以定义在 icons.yml 文件中，也支持外部图片的 URL
-    # title: 标题
-    # url: 点击跳转到哪，支持相对路径和绝对路径
-    # - id: post
-    #   theme: '#1BCDFC'
-    #   icon: solar:documents-bold-duotone
-    #   title: 博客
-    #   url: /
-    # - id: wiki
-    #   theme: '#3DC550'
-    #   icon: solar:notebook-bookmark-bold-duotone
-    #   title: 文档
-    #   url: /wiki/
-    # - id: explore
-    #   theme: '#FA6400'
-    #   icon: solar:planet-bold-duotone
-    #   title: 探索
-    #   url: /explore/
-    # - id: social
-    #   theme: '#F44336'
-    #   icon: solar:chat-square-like-bold-duotone
-    #   title: 社交
-    #   url: /friends/
+  columns: 4
+  items:
+    - id: post
+      theme: '#1BCDFC'
+      icon: solar:documents-bold-duotone
+      title: 博客
+      url: /
+    - id: wiki
+      theme: '#3DC550'
+      icon: solar:notebook-bookmark-bold-duotone
+      title: 文档
+      url: /wiki/
+    - id: explore
+      theme: '#FA6400'
+      icon: solar:planet-bold-duotone
+      title: 探索
+      url: /explore/
+    - id: social
+      theme: '#F44336'
+      icon: solar:chat-square-like-bold-duotone
+      title: 关于
+      url: /about/
 
 
 ######## Main ########
@@ -190,11 +186,13 @@ article:
   auto_excerpt: 128
   # 分类颜色
   category_color:
-    '探索号': '#f44336'
+    '技术': '#1BCDFC'
+    '生活': '#3DC550'
+    '探索': '#FA6400'
   # 文章许可协议
   license: '本文采用 [署名-非商业性使用-相同方式共享 4.0 国际](https://creativecommons.org/licenses/by-nc-sa/4.0/) 许可协议，转载请注明出处。'
   # 分享
-  share: # [wechat, weibo, email, link]
+  share: [wechat, weibo, email, link]
   # 相关文章，需要安装插件 (for layout: post)
   # npm i hexo-related-popular-posts
   related_posts:
@@ -217,9 +215,9 @@ search:
 
 ######## Comments ########
 comments:
-  service: # beaudar, utterances, giscus, twikoo, waline, artalk
+  service: giscus # TODO: 需要去 https://giscus.app/zh-CN 获取配置后填入下方
   comment_title: 快来参与讨论吧~
-  lazyload: false # true / false
+  lazyload: true # 延迟加载评论，提升页面加载速度
   custom_css: # artalk,twikoo,... 可以为没有全局启用的评论加载自定义样式
   # beaudar
   # https://beaudar.lipk.org/
@@ -242,22 +240,21 @@ comments:
     issue-number:
     theme: preferred-color-scheme
     label:
-  # giscus
-  # https://giscus.app/zh-CN
+  # giscus - TODO: 去 https://giscus.app/zh-CN 配置后填入以下信息
   giscus:
     src: https://giscus.app/client.js
-    data-repo: xxx/xxx # [在此输入仓库]
-    data-repo-id: # [在此输入仓库 ID]
-    data-category: # [在此输入分类名]
-    data-category-id:
+    data-repo: coconuttree0730/coconuttree0730.github.io # TODO: 替换为你的仓库
+    data-repo-id: # TODO: 从 giscus.app 获取
+    data-category: Announcements # TODO: 从 giscus.app 获取
+    data-category-id: # TODO: 从 giscus.app 获取
     data-mapping: pathname
     data-strict: 0
     data-reactions-enabled: 1
     data-emit-metadata: 0
-    data-input-position: top # top, bottom
+    data-input-position: top
     data-theme: preferred_color_scheme
     data-lang: zh-CN
-    data-loading: # lazy
+    data-loading: lazy
     crossorigin: anonymous
 
   # Twikoo
@@ -329,47 +326,25 @@ comments:
 ######## Footer ########
 footer:
   social:
-    # github:
-    #   icon: '<img src="https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/social/08a41b181ce68.svg"/>'
-    #   url: /
-    # music:
-    #   icon: '<img src="https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/social/3845874.svg"/>'
-    #   url: /
-    # unsplash:
-    #   icon: '<img src="https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/social/3616429.svg"/>'
-    #   url: /
-    # comments:
-    #   icon: '<img src="https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/social/942ebbf1a4b91.svg"/>'
-    #   url: /about/#comments
+    github:
+      icon: '<img src="https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/social/08a41b181ce68.svg"/>'
+      url: https://github.com/coconuttree0730
+    email:
+      icon: '<img src="https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/social/942ebbf1a4b91.svg"/>'
+      url: mailto:wu.zhongpeng@foxmail.com
   sitemap:
-    # - title: 博客
-    #   items:
-    #     - '[近期发布](/)'
-    #     - '[分类](/blog/categories/)'
-    #     - '[标签](/blog/tags/)'
-    #     - '[归档](/blog/archives/)'
-    # - title: 项目
-    #   items:
-    #     - '[xxx](/)'
-    #     - '[xxx](/)'
-    #     - '[xxx](/)'
-    #     - '[xxx](/)'
-    # - title: 社交
-    #   items:
-    #     - '[xxx](/)'
-    #     - '[xxx](/)'
-    #     - '[xxx](/)'
-    #     - '[xxx](/)'
-    # - title: 关于
-    #   items:
-    #     - '[xxx](/)'
-    #     - '[xxx](/)'
-    #     - '[xxx](/)'
-    #     - '[xxx](/)'
+    - title: 博客
+      items:
+        - '[近期发布](/)'
+        - '[分类](/blog/categories/)'
+        - '[标签](/blog/tags/)'
+        - '[归档](/blog/archives/)'
+    - title: 关于
+      items:
+        - '[关于我](/about/)'
   content: | # 支持 Markdown 格式
     本站由 [{author.name}](/) 使用 [{theme.name} {theme.version}]({theme.tree}) 主题创建。
     本博客所有文章除特别声明外，均采用 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 许可协议，转载请注明出处。
-  # 主题用户越多，开发者维护和更新的积极性就越高，如果您喜欢本主题，请在适当的位置显示主题信息和仓库链接以表支持。
 
 
 ######## Tag Plugins ########
@@ -544,7 +519,7 @@ plugins:
     # 可以处理评论区的图片（不支持 iframe 类评论系统）例如：
     # 使用 twikoo 评论可以写: .tk-content img:not([class*="emo"])
     # 使用 waline 评论可以写: #waline_container .vcontent img
-    selector: .timenode p>img # 多个选择器用英文逗号隔开
+    selector: .md-text img:not([class]), .timenode p>img # 多个选择器用英文逗号隔开
 
   # swiper
   swiper:
@@ -656,9 +631,9 @@ style:
     image-s: 8px # 评论区图片圆角（部分评论支持）
   color:
     # 主题色配置（不会根据明暗动态调整，请设置为通用的颜色）
-    theme: 'hsl(192 98% 55%)' # 主题色
-    accent: 'hsl(14 100% 57%)' # 强调色
-    link: 'hsl(207 90% 54%)' # 超链接颜色
+    theme: 'hsl(210 80% 55%)' # 蓝色主题色，偏沉稳
+    accent: 'hsl(25 95% 53%)' # 橙色强调色
+    link: 'hsl(210 80% 55%)' # 超链接颜色
   animated_avatar:
     animate: auto # auto, always
     background: https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/avatar/round/rainbow64@3x.webp
