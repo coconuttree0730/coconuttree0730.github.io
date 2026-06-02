@@ -69,7 +69,13 @@ site_tree:
   # 主页配置
   home:
     leftbar: welcome, recent
-    rightbar: 
+    rightbar:
+    nav_tabs:
+      '近期发布': /
+      '分类': /blog/categories/
+      '标签': /blog/tags/
+      '专栏': /blog/topics/
+      '归档': /blog/archives/
   # 博客列表页配置
   index_blog:
     base_dir: blog # 只影响自动生成的页面路径
