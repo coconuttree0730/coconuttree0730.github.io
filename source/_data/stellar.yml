@@ -32,7 +32,7 @@ structured_data:
 ######## Sidebar ########
 # 左上角显示的 logo 区域，包含图标、大标题、副标题
 logo:
-  avatar: '[{config.avatar}](/about/)' # TODO: 在 _config.yml 中设置 avatar，或直接填入头像URL
+  avatar: '[{config.avatar}](/about/)'
   title: '[{config.title}](/)' # 读取 _config.yml 的 title
   subtitle: '{config.subtitle}' # '文字1 | 文字2' (鼠标放上去会切换到文字2)
 
