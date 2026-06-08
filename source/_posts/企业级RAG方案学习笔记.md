@@ -339,26 +339,208 @@ def verify_citations(answer, context_docs):
     return add_disclaimers(answer)
 ```
 
-### 3.3 评估体系
+### 3.3 评估体系（重点）
 
-| 指标 | 说明 | 计算方式 |
+评估是 RAG 持续优化的闭环核心。没有评估，优化就是盲人摸象。
+
+#### 3.3.1 构建测试数据集
+
+**测试集是评估的基石。** 没有高质量测试集，一切指标都是空中楼阁。
+
+**测试集结构：**
+
+```json
+{
+  "question": "公司年假政策是什么？",
+  "ground_truth": "入职满1年享有5天年假，满10年享有10天年假",
+  "ground_truth_doc_ids": ["doc_hr_001", "doc_hr_003"],
+  "difficulty": "easy",
+  "category": "人事制度",
+  "question_type": "事实型"
+}
+```
+
+**构建方法：**
+
+| 方法 | 做法 | 适用场景 |
 |------|------|---------|
-| Recall@K | 前 K 个检索结果中包含正确文档的比例 | 检索质量 |
-| MRR | 正确文档排名的倒数 | 排序质量 |
-| Faithfulness | 回答是否忠于检索到的文档 | 幻觉率 |
-| Answer Relevancy | 回答与问题的相关程度 | 回答质量 |
-| Context Precision | 检索到的文档是否与问题相关 | 噪音率 |
+| 人工标注 | 业务专家编写 QA 对 | 起步阶段，质量最高 |
+| LLM 辅助生成 | 用 LLM 基于文档批量生成 QA，人工审核 | 快速扩充 |
+| 真实日志挖掘 | 从线上用户 query 中筛选高频问题 | 最贴近真实分布 |
+| 对抗样本 | 故意构造模糊、歧义、跨文档的问题 | 测试边界情况 |
 
-**推荐使用 RAGAS 框架做自动化评估：**
+**测试集规模参考：**
+- 原型验证：50~100 条
+- 上线前验收：300~500 条
+- 持续回归：1000+ 条，按类别均衡分布
+
+**测试集分类（覆盖不同场景）：**
+
+| 类型 | 示例 | 测试目的 |
+|------|------|---------|
+| 事实型 | "XX产品的退款周期是多久？" | 精确检索+忠实回答 |
+| 摇摆型 | "A和B哪个更好？" | 需要综合多文档 |
+| 无答案型 | "公司的股票代码是多少？"（文档中没有） | 是否能拒答而非编造 |
+| 多跳型 | "张三负责的项目用了什么技术栈？" | 需要跨文档推理 |
+| 模糊型 | "那个政策怎么算的？" | 测试 query 改写能力 |
+| 对抗型 | "公司允许迟到吗？"（文档说不允许） | 是否被诱导说反话 |
+
+#### 3.3.2 评估指标详解
+
+RAG 评估分三个层次：**检索质量 → 生成质量 → 端到端质量**。
+
+**① 检索质量（Retrieval Quality）**
+
+| 指标 | 含义 | 计算方式 | 合格线 |
+|------|------|---------|--------|
+| Recall@K | 前 K 个结果是否命中正确文档 | 命中数 / 总相关文档数 | Recall@5 ≥ 0.85 |
+| Precision@K | 前 K 个结果中有多少是相关的 | 相关数 / K | Precision@5 ≥ 0.6 |
+| MRR | 正确文档排在第几位 | 1/排名 的平均值 | MRR ≥ 0.7 |
+| NDCG@10 | 排序质量（考虑位置权重） | 折扣累积增益 | NDCG@10 ≥ 0.75 |
+
+**② 生成质量（Generation Quality）**
+
+| 指标 | 含义 | 合格线 |
+|------|------|--------|
+| Faithfulness | 回答中的每个断言是否有文档支撑 | ≥ 0.9（核心指标！） |
+| Answer Relevancy | 回答是否切题 | ≥ 0.8 |
+| Completeness | 回答是否覆盖了问题的所有方面 | ≥ 0.7 |
+
+**③ 端到端质量（End-to-End）**
+
+| 指标 | 含义 | 合格线 |
+|------|------|--------|
+| Correctness | 回答与标准答案的语义一致性 | ≥ 0.8 |
+| Refusal Accuracy | 无答案问题是否正确拒答 | ≥ 0.95 |
+| Hallucination Rate | 幻觉率（1 - Faithfulness） | ≤ 0.1 |
+
+#### 3.3.3 什么是"坏的结果"？
+
+明确 bad case 分类，才能针对性优化：
+
+| Bad Case 类型 | 表现 | 根因 | 修复方向 |
+|--------------|------|------|---------|
+| **幻觉** | 回答了文档中没有的信息 | LLM 编造，prompt 约束不足 | 加强 system prompt + 后验证 |
+| **答非所问** | 回答跑题 | 检索到了不相关的文档 | 优化 Embedding / Rerank |
+| **遗漏** | 回答不完整，漏掉关键信息 | 相关文档没被检索到 | 提高 Recall，调整 chunk 策略 |
+| **错误拒答** | 有答案却说"不知道" | 检索没命中，阈值太高 | 降低检索阈值，优化 query 改写 |
+| **过度拒答** | 模棱两可时不敢回答 | prompt 过于保守 | 调整 prompt，增加"部分信息"话术 |
+| **信息过时** | 回答了旧版本的政策 | 增量更新没跟上 | 检查索引更新机制 |
+| **来源混淆** | 引用了错误的文档编号 | 元数据映射错误 | 检查文档 ID 映射链路 |
+| **冗余啰嗦** | 正确但废话太多 | LLM 生成风格问题 | prompt 中加"简洁回答"约束 |
+
+#### 3.3.4 评估流程与回归机制
+
+**评估不是一次性的事，是持续的闭环：**
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                   RAG 评估闭环流程                        │
+│                                                          │
+│  ① 构建/更新测试集                                        │
+│       ↓                                                  │
+│  ② 跑全量评估 → 生成报告                                  │
+│       ↓                                                  │
+│  ③ 分析 Bad Case → 归因分类                               │
+│       ↓                                                  │
+│  ④ 针对性调优（见下方调优矩阵）                              │
+│       ↓                                                  │
+│  ⑤ 回归测试 → 确认修复 + 无回归                            │
+│       ↓                                                  │
+│  ⑥ 更新测试集（加入新发现的 bad case）                      │
+│       ↓                                                  │
+│  回到 ②                                                  │
+└──────────────────────────────────────────────────────────┘
+```
+
+**自动化评估脚本：**
+
 ```python
 from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_precision
-
-result = evaluate(
-    dataset=eval_dataset,
-    metrics=[faithfulness, answer_relevancy, context_precision],
+from ragas.metrics import (
+    faithfulness,
+    answer_relevancy,
+    context_precision,
+    context_recall,
 )
+
+def run_evaluation(eval_dataset, pipeline_version):
+    """运行全量评估并记录结果"""
+    result = evaluate(
+        dataset=eval_dataset,
+        metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+    )
+
+    report = {
+        "pipeline_version": pipeline_version,
+        "faithfulness": result["faithfulness"],
+        "answer_relevancy": result["answer_relevancy"],
+        "context_precision": result["context_precision"],
+        "context_recall": result["context_recall"],
+        "total_questions": len(eval_dataset),
+    }
+
+    # 检查是否有回归
+    baseline = load_baseline()
+    regressions = check_regression(report, baseline)
+
+    if regressions:
+        alert(f"⚠️ 回归检测：{regressions}")
+        return report, False  # 未通过
+
+    return report, True  # 通过
 ```
+
+#### 3.3.5 Bad Case 归因与调优矩阵
+
+**发现 bad case 后，关键是定位根因并调优：**
+
+| 症状 | 检查项 | 调优手段 |
+|------|--------|---------|
+| Recall 低 | 相关文档没被检索到 | ① 换更好的 Embedding 模型<br>② 调整 chunk size（太大→语义稀释，太小→上下文丢失）<br>③ 加入 query 改写 / HyDE<br>④ 混合检索加入 BM25 |
+| Precision 低 | 检索到了太多不相关文档 | ① 加 Reranker 精排<br>② 加元数据预过滤（时间、类别）<br>③ 提高相似度阈值 |
+| Faithfulness 低 | LLM 编造了文档中没有的信息 | ① 加强 system prompt 约束<br>② 加后置幻觉检测<br>③ 降低 temperature |
+| Relevancy 低 | 回答跑题 | ① 优化 prompt 模板<br>② 在 prompt 中强调"只回答用户问题"<br>③ 减少上下文噪音 |
+| 延迟高 | 响应太慢 | ① Embedding 量化（float32→int8）<br>② 向量缓存<br>③ Rerank 只处理 top 20 而非 top 50<br>④ 流式输出 |
+
+#### 3.3.6 回归测试
+
+**每次调优后必须回归，防止"修了 A 坏了 B"：**
+
+```python
+def check_regression(current_report, baseline, tolerance=0.02):
+    """对比基线，检测回归"""
+    regressions = []
+
+    for metric in ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]:
+        current = current_report[metric]
+        base = baseline[metric]
+
+        if current < base - tolerance:
+            regressions.append({
+                "metric": metric,
+                "baseline": base,
+                "current": current,
+                "delta": current - base,
+            })
+
+    return regressions
+
+# CI/CD 集成：评估不过则阻断部署
+if __name__ == "__main__":
+    report, passed = run_evaluation(test_dataset, "v2.1")
+    if not passed:
+        print("❌ 回归测试未通过，阻断部署")
+        sys.exit(1)
+    else:
+        print(f"✅ 评估通过: {report}")
+        save_baseline(report)
+```
+
+**回归策略：**
+- **全量回归**：每次重大调优（换模型、改分块策略）→ 跑全量测试集
+- **增量回归**：日常小调优 → 只跑受影响类别的子集
+- **灰度验证**：线上 A/B 测试，新管线 vs 旧管线对比
 
 ### 3.4 性能优化
 
